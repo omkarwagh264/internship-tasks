@@ -1,0 +1,84 @@
+# import pandas library
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score,confusion_matrix
+from sklearn.linear_model import LogisticRegression
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+
+
+df = pd.read_csv("heart.csv")
+df.head()
+
+# Data Cleaning
+
+df = df.drop_duplicates()
+df.describe()
+
+df.isna().sum()
+
+
+df.isnull().sum()
+
+subset1 = df[['age', 'sex']]
+subset2 = df[['cp','trtbps']]
+
+merged = pd.concat([subset1,subset2],axis=1)
+
+# Data Error Correcting
+
+def remove_outliers(column):
+    Q1 = column.quantile(0.25)
+    Q2 = column.quantile(0.75)
+    IQR = Q2 - Q1
+    threshold = 1.5 * IQR
+    outlier_mask = (column < Q1 - threshold) | (column > Q2 + threshold)
+    return column[~outlier_mask]
+
+
+col_name = ['cp', 'thalachh', 'exng', 'oldpeak', 'slp', 'caa']
+for col in col_name:
+    df[col] = remove_outliers(df[col])
+
+plt.figure(figsize=(10, 6))  # Adjust the figure size if needed
+
+for col in col_name:
+    sns.boxplot(data=df[col])
+    plt.title(col)
+    plt.show()
+
+## Data Transformation
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+scaled_data = scaler.fit_transform(df)
+
+# Data  Model
+x = df.drop('output', axis=1)
+y = df['output']
+
+x_train, x_test , y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=42)
+
+model = LogisticRegression()
+model.fit(x_train, y_train)
+
+model.predict(x_test)
+
+from sklearn.tree import DecisionTreeClassifier
+
+model1 = DecisionTreeClassifier(criterion='gini', max_depth=4, random_state=42)
+model1.fit(x_train, y_train)
+
+model1.predict(x_test)
+
+from sklearn.tree import plot_tree
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(20,10))
+plot_tree(model1, feature_names=x.columns, class_names=['No Disease', 'Disease'], filled=True)
+plt.show()
